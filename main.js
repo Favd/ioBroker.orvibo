@@ -139,7 +139,34 @@ adapter.on('ready', function () {
 });
 
 function main() {
-	subscribeDevices()		
+	subscribeDevices();
+	
+	adapter.on('message', function (obj) {
+		adapter.log.info('**************');
+		adapter.log.info(JSON.stringify(obj));		
+		
+		var tempObj;
+		adapter.getObject('orvibo.0.devices', function(err, obj){
+		tempObj = obj;
+		adapter.log.info(JSON.stringify(tempObj));
+		});
+		setTimeout(function () {
+		
+		adapter.log.info(JSON.stringify('------------' + tempObj));
+		adapter.log.info(JSON.stringify(obj.callback));
+		adapter.sendTo(obj.from, obj.command, tempObj, obj.callback);
+		}, 1000);
+		//"command":"message","message":"message","from":"system.adapter.admin.0","callback":{"message":"message","id":23,"ack":false,"time":1511877390521},"_id":25310910}
+		if (typeof obj == 'object' && obj.message) {
+			if (obj.command == 'send') {
+				// e.g. send email or pushover or whatever
+				console.log('send command');
+
+				// Send response in callback if required
+			if (obj.callback) adapter.sendTo(obj.from, obj.command, 'Message received', obj.callback);
+			}
+		}
+	});
 		
 	// Таймер подписки устройств
 	setInterval(function(){
