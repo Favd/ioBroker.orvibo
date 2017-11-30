@@ -12,9 +12,9 @@
                 "nl": "Beta versie"
             },
             "0.0.1": {
-                "en": "initial adapter",
-                "de": "Initiale Version",
-                "ru": "Первоначальный адаптер",
+                "en": "orvibo adapter",
+                "de": "orvibo Version",
+                "ru": "orvibo адаптер",
                 "pt": "Versão inicial",
                 "fr": "Version initiale",
                 "nl": "Eerste release"
@@ -22,15 +22,15 @@
         },
         "title": "orvibo adapter",
         "desc": {
-            "en": "ioBroker orvibo Adapter",
-            "de": "ioBroker orvibo Adapter",
-            "ru": "ioBroker orvibo драйвер как образец",
+            "en": "ioBroker Orvibo Adapter",
+            "de": "ioBroker Orvibo Adapter",
+            "ru": "ioBroker Orvibo драйвер как образец",
             "pt": "Modelo de adaptador para o ioBroker",
             "fr": "ioBroker adaptateur modèle",
-            "nl": "ioBroker orvibo Adapter"
+            "nl": "ioBroker Orvibo Adapter"
         },
         "authors": [
-            "my Name <my@email.com>"
+            "Favd <vf2301@gmail.com>"
         ],
         "platform": "Javascript/Node.js",
         "mode": "daemon",
@@ -38,7 +38,7 @@
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.orvibo/master/admin/orvibo.png",
         "keywords": ["orvibo", "vis", "GUI", "graphical", "scada"],
-        "readme": "https://github.com/ioBroker/ioBroker.orvibo/blob/master/README.md",
+        "readme": "https://github.com/Favd/ioBroker.Orvibo/README.md",
         "loglevel": "info",
         "type": "general",
 		"messagebox": true,
@@ -46,8 +46,6 @@
         "restartAdapters": ["vis"]
     },
     "native": {
-        "test1": true,
-        "test2": 42
     },
     "objects": [
 
