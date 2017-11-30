@@ -157,12 +157,13 @@ function main() {
 				
 		//Обработка ответа о поиске. Создание обекта с данными IP и MAC
 		if (msg.toString('hex').substr(8,4) == '7161'){
+			adapter.log.info('temp - point 1 ' + msg.toString('hex'));
 			var mac = msg.toString('hex').substr(14,12);
 			for(var key in orviboNow){
 				if (key == mac) return;
 			}
 			var obj = messageToObject(msg, info);
-			createOrvibo(obj)
+			createOrvibo(obj);
 		}
 		
 		//Обработка ответа о подписке. Изменение состояния Онлайн и состояния сокета
@@ -217,6 +218,7 @@ function main() {
 
 	// Функция создание объекта
 	function createOrvibo(obj){
+		
 		adapter.createChannel('devices', obj.mac, obj);
 		adapter.log.info('device - ' + obj.model);
 		
