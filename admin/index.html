@@ -1,0 +1,169 @@
+<html>
+
+<!-- these 4 files always have to be included -->
+<link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css"/>
+<script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+<script type="text/javascript" src="../../lib/js/jquery-ui-1.10.3.full.min.js"></script>
+
+
+<!-- optional: use jqGrid
+<link rel="stylesheet" type="text/css" href="../../lib/css/jqGrid/ui.jqgrid-4.5.4.css"/>
+<script type="text/javascript" src="../../lib/js/jqGrid/jquery.jqGrid-4.5.4.min.js"></script>
+<script type="text/javascript" src="../../lib/js/jqGrid/i18n/grid.locale-all.js"></script>
+-->
+
+<!-- optional: use multiselect
+<link rel="stylesheet" type="text/css" href="../../lib/css/jquery.multiselect-1.13.css"/>
+<script type="text/javascript" src="../../lib/js/jquery.multiselect-1.13.min.js"></script>
+-->
+
+<!-- these two file always have to be included -->
+<link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
+<script type="text/javascript" src="../../js/translate.js"></script>
+<script type="text/javascript" src="../../js/adapter-settings.js"></script>
+<script type="text/javascript" src="words.js"></script>
+
+
+<!-- you have to define 2 functions in the global scope: -->
+<script type="text/javascript">
+
+    // the function loadSettings has to exist ...
+    function load(settings, onChange) {
+        // example: select elements with id=key and class=value and insert value
+       if (!settings) return;
+        $('.value').each(function () {
+            var $key = $(this);
+            var id = $key.attr('id');
+            if ($key.attr('type') === 'checkbox') {
+		// do not call onChange direct, because onChange could expect some arguments
+                $key.prop('checked', settings[id]).change(function() {
+                    onChange();
+                });
+            } else {
+		// do not call onChange direct, because onChange could expect some arguments
+                $key.val(settings[id]).change(function() {
+                    onChange();
+                }).keyup(function() {
+                    onChange();
+                });
+            }
+        });
+        onChange(false);
+    }
+
+    // ... and the function save has to exist.
+    // you have to make sure the callback is called with the settings object as first param!
+    function save(callback) {
+        // example: select elements with class=value and build settings object
+        var obj = {};
+        $('.value').each(function () {
+            var $this = $(this);
+			if ($this.attr('type') === 'checkbox') {
+				obj[$this.attr('id')] = $this.prop('checked');
+			} else {
+				obj[$this.attr('id')] = $this.val();
+			}
+        });
+        callback(obj);
+    }
+</script>
+
+<!-- you have to put your config page in a div with id adapter-container -->
+<div id="adapter-container">
+
+    <table><tr>
+        <td><img src="template.png"/></td>
+        <td><h3 class="translate">ORVIBO adapter</h3></td>
+    </tr></table>
+    
+    <!--// <p class="translate">on save adapter restarts with new config immediately</p> -->
+	<div id="myDiv">
+	
+	</div>
+	<div id="myDiv1">
+	
+	</div>
+	<div id="main">
+	<table id="table" style = "padding: 10px">
+	</table>
+	<input type="button" value="Обновить список устройств" onclick="seachDevices()"/>
+	
+	<table id="tableIR" style = "margin-top: 20px; padding: 10px">
+	</table>
+	
+	</div>
+	
+	
+
+</div>
+
+<script>
+
+	
+	function getDevices(){
+		socket.emit('getObject', 'template.0.devices' , function(err, obj){
+			//myDiv.innerHTML = '*******' + JSON.stringify(obj.orviboDevices);
+			for(var key in obj.orviboDevices){
+				socket.emit('getObject', 'template.0.devices.'+key , function(err, objChannel){
+					newTR = document.createElement('tr');
+					newTR.setAttribute('id', objChannel.common.mac);
+					table.appendChild(newTR);
+					var newTD = document.createElement('td');
+					newTR.appendChild(newTD);
+					newTD.innerHTML = objChannel.common.mac +' ::: ';
+					var newTD = document.createElement('td');
+					newTR.appendChild(newTD);
+					newTD.innerHTML = objChannel.common.name;
+					var newTD = document.createElement('td');
+					newTR.appendChild(newTD);
+					newTD.innerHTML = ' ::: ' + objChannel.common.ip;
+					if(objChannel.common.name == 'Allone') getAlloneIR(objChannel);					
+				});
+			}
+		});	
+	}
+	
+	function seachDevices(){
+		socket.emit('setState', 'template.0.seachDevices', {val: true, ack: false});
+		table.innerHTML = 'Please wait....';
+		
+		setTimeout(function(){
+			table.innerHTML = '<b>Список активных устройств:</b><br>';
+			getDevices();
+		}, 3000);
+	}
+	
+	function getAlloneIR(objChannel){
+		newTR = document.createElement('tr');
+		newTR.setAttribute('id', objChannel.common.mac);
+		tableIR.appendChild(newTR);
+		var newTD = document.createElement('td');
+		newTR.appendChild(newTD);
+		newTD.innerHTML = objChannel.common.mac +' ::: ';
+		var newTD = document.createElement('td');
+		newTR.appendChild(newTD);
+		newTD.innerHTML = objChannel.common.name;
+		var newTD = document.createElement('td');
+		newTR.appendChild(newTD);
+		newTD.innerHTML = ' ::: ' + objChannel.common.ip;
+		//socket.emit('123', 'ttt');
+		//socket.emit('getStates', 'template.0.devices.', function(err, obj){
+		//	myDiv.innerHTML = '*******' + JSON.stringify(obj);
+		//	myDiv.innerHTML = '*******err:' + err;
+		//});
+	}
+	
+	$(document).ready(function(){
+        getDevices();
+		sendTo('template.0', 'test', 'test', function(obj){
+			if(obj){
+				myDiv.innerHTML = '++++' + JSON.stringify(obj);
+			}
+		});
+    })
+
+	
+</script>
+
+</html>
