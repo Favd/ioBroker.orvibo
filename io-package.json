@@ -1,6 +1,6 @@
 {
     "common": {
-        "name": "template",
+        "name": "orvibo",
         "version": "0.5.0",
         "news": {
             "0.5.0": {
@@ -20,27 +20,29 @@
                 "nl": "Eerste release"
             }
         },
-        "title": "Javascript/Node.js based template adapter",
+        "title": "orvibo adapter",
         "desc": {
-            "en": "ioBroker template Adapter",
-            "de": "ioBroker Template Adapter",
-            "ru": "ioBroker Template драйвер как образец",
+            "en": "ioBroker orvibo Adapter",
+            "de": "ioBroker orvibo Adapter",
+            "ru": "ioBroker orvibo драйвер как образец",
             "pt": "Modelo de adaptador para o ioBroker",
             "fr": "ioBroker adaptateur modèle",
-            "nl": "ioBroker Template Adapter"
+            "nl": "ioBroker orvibo Adapter"
         },
         "authors": [
             "my Name <my@email.com>"
         ],
         "platform": "Javascript/Node.js",
         "mode": "daemon",
-        "icon": "template.png",
+        "icon": "orvibo.png",
         "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.template/master/admin/template.png",
-        "keywords": ["template", "vis", "GUI", "graphical", "scada"],
-        "readme": "https://github.com/ioBroker/ioBroker.template/blob/master/README.md",
+        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.orvibo/master/admin/orvibo.png",
+        "keywords": ["orvibo", "vis", "GUI", "graphical", "scada"],
+        "readme": "https://github.com/ioBroker/ioBroker.orvibo/blob/master/README.md",
         "loglevel": "info",
         "type": "general",
+		"messagebox": true,
+		"subscribe": "messagebox",
         "restartAdapters": ["vis"]
     },
     "native": {

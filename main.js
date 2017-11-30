@@ -34,7 +34,7 @@
 var utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 var tools  = require(__dirname + '/lib/tools');
 var dgram = require('dgram');
-var adapter = utils.adapter('template');
+var adapter = utils.adapter('orvibo');
 var socket = dgram.createSocket('udp4');
 socket.bind(10000, tools.findIPs()[1]);
 
