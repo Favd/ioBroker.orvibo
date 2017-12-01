@@ -73,7 +73,7 @@
 <div id="adapter-container">
 
     <table><tr>
-        <td><img src="template.png"/></td>
+        <td><img src="orvibo.png"/></td>
         <td><h3 class="translate">ORVIBO adapter</h3></td>
     </tr></table>
     
@@ -102,10 +102,10 @@
 
 	
 	function getDevices(){
-		socket.emit('getObject', 'template.0.devices' , function(err, obj){
+		socket.emit('getObject', 'orvibo.0.devices' , function(err, obj){
 			//myDiv.innerHTML = '*******' + JSON.stringify(obj.orviboDevices);
 			for(var key in obj.orviboDevices){
-				socket.emit('getObject', 'template.0.devices.'+key , function(err, objChannel){
+				socket.emit('getObject', 'orvibo.0.devices.'+key , function(err, objChannel){
 					newTR = document.createElement('tr');
 					newTR.setAttribute('id', objChannel.common.mac);
 					table.appendChild(newTR);
@@ -125,7 +125,7 @@
 	}
 	
 	function seachDevices(){
-		socket.emit('setState', 'template.0.seachDevices', {val: true, ack: false});
+		socket.emit('setState', 'orvibo.0.seachDevices', {val: true, ack: false});
 		table.innerHTML = 'Please wait....';
 		
 		setTimeout(function(){
@@ -148,7 +148,7 @@
 		newTR.appendChild(newTD);
 		newTD.innerHTML = ' ::: ' + objChannel.common.ip;
 		//socket.emit('123', 'ttt');
-		//socket.emit('getStates', 'template.0.devices.', function(err, obj){
+		//socket.emit('getStates', 'orvibo.0.devices.', function(err, obj){
 		//	myDiv.innerHTML = '*******' + JSON.stringify(obj);
 		//	myDiv.innerHTML = '*******err:' + err;
 		//});
@@ -156,7 +156,7 @@
 	
 	$(document).ready(function(){
         getDevices();
-		sendTo('template.0', 'test', 'test', function(obj){
+		sendTo('orvibo.0', 'test', 'test', function(obj){
 			if(obj){
 				myDiv.innerHTML = '++++' + JSON.stringify(obj);
 			}
