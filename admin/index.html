@@ -125,8 +125,15 @@
 	}
 	
 	function seachDevices(){
-		socket.emit('setState', 'orvibo.0.seachDevices', {val: true, ack: false});
+		//socket.emit('setState', 'orvibo.0.seachDevices', {val: true, ack: false});
 		table.innerHTML = 'Please wait....';
+		
+		socket.emit('sendTo', 'orvibo.0', 'seachDevices', 'message', function(obj){
+		JSON.stringify(obj);
+			if(obj){
+				myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
+			}
+		});	
 		
 		setTimeout(function(){
 			table.innerHTML = '<b>Список активных устройств:</b><br>';
@@ -154,13 +161,24 @@
 		//});
 	}
 	
+	function learnIR(){
+	
+		tableIR.innerHTML = 'Please wait....';
+		
+		socket.emit('sendTo', 'orvibo.0', 'learnIR', 'mac', function(obj){
+		JSON.stringify(obj);
+			if(obj){
+				//myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
+			}
+		});	
+		
+		setTimeout(function(){
+			
+		}, 3000);
+	}
+	
 	$(document).ready(function(){
         getDevices();
-		sendTo('orvibo.0', 'test', 'test', function(obj){
-			if(obj){
-				myDiv.innerHTML = '++++' + JSON.stringify(obj);
-			}
-		});
     })
 
 	

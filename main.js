@@ -65,35 +65,11 @@ adapter.on('stateChange', function (id, state) {
     }
 });
 
-// Some message was sent to adapter instance over message box. Used by email, pushover, text2speech, ...
-adapter.on('message', function (obj) {
-	adapter.log.info('---------!!!----' + obj);
-    if (typeof obj == 'object' && obj.message) {
-        if (obj.command == 'send') {
-            // e.g. send email or pushover or whatever
-            console.log('send command');
-
-            // Send response in callback if required
-            if (obj.callback) adapter.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-        }
-    }
-});
 
 adapter.on('test', function (obj) {
-	adapter.log.info('---------!!!----' + obj);
+	adapter.log.info('comand test' + obj);
 });
 
-
-adapter.setObject('seachDevices', {
-		type: 'state',
-        common: {
-            name: 'seachDevices',
-            role: 'state',
-			type: 'state'
-        },
-        native: {},
-	});
-	
 adapter.createDevice('devices', {
         common: {
             name: 'devices',
@@ -142,30 +118,17 @@ function main() {
 	subscribeDevices();
 	
 	adapter.on('message', function (obj) {
-		adapter.log.info('**************');
-		adapter.log.info(JSON.stringify(obj));		
-		
-		var tempObj;
-		adapter.getObject('orvibo.0.devices', function(err, obj){
-		tempObj = obj;
-		adapter.log.info(JSON.stringify(tempObj));
-		});
-		setTimeout(function () {
-		
-		adapter.log.info(JSON.stringify('------------' + tempObj));
-		adapter.log.info(JSON.stringify(obj.callback));
-		adapter.sendTo(obj.from, obj.command, tempObj, obj.callback);
-		}, 1000);
-		//"command":"message","message":"message","from":"system.adapter.admin.0","callback":{"message":"message","id":23,"ack":false,"time":1511877390521},"_id":25310910}
-		if (typeof obj == 'object' && obj.message) {
-			if (obj.command == 'send') {
-				// e.g. send email or pushover or whatever
-				console.log('send command');
-
-				// Send response in callback if required
-			if (obj.callback) adapter.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-			}
+		adapter.log.info('---------- Adapter reseive Message: ' + JSON.stringify(obj));
+		if(obj.command == 'seachDevices'){
+			adapter.sendTo(obj.from, obj.command, 'Reseive "seachDevices". Return letter', obj.callback);
+			sendSeach();
 		}
+		if(obj.command == 'learnIR'){
+			adapter.sendTo(obj.from, obj.command, 'Reseive "learnIR". Return letter', obj.callback);
+			adapter.getObject(obj.message, function(err, object){
+				learnIR(object);
+			});
+		} 
 	});
 		
 	// Таймер подписки устройств
@@ -207,20 +170,13 @@ function main() {
 			adapter. setState('devices.'+mac+'.onOff', msg.toString('hex').substr(-1,1), true);
 		}
 		
-		//Обработка ответа Возврат IR кода при обучении. Сохдание State - команды
+		//Обработка ответа Возврат IR кода при обучении.
 		if (msg.toString('hex').substr(8,4) == '6c73' && msg.toString('hex').length > 70){
 			var mac = msg.toString('hex').substr(12,12);
 			var IR = msg.toString('hex').substr(48);
 			adapter.log.info('Получен msg - ' + msg.toString('hex'));
 			adapter.log.info('Получен IR - ' + IR);
-			//adapter. setState('devices.'+mac+'.ir', IR, true);
-			adapter.createState('devices', mac, 'IR_'+IR.substr(30,5), {
-				role: 'command',
-				name: 'IR comand',
-				write: true,
-				IRcode: IR,
-				native: {}
-			});
+			createIRcommand(mac, IR);
 		}
 	});
 	
@@ -297,6 +253,22 @@ function main() {
 		});
 	}
 	
+	
+	// Создание команды IR при обучении
+	function createIRcommand(mac, IR){
+		adapter.getObject(mac, function(err, obj){
+			adapter.createState('devices', mac, ('IR_' + obj.native.length), {
+				role: 'command',
+				name: 'IR comand',
+				write: true,
+				native: {
+					IRcode: IR
+				}
+			});
+		});
+	}
+	
+	
 	// ИМЕНЕНИЕ СТАТУСА s20
 	function setStateS20(state, obj){
 		if(state.val == 1){
@@ -355,7 +327,7 @@ function main() {
 	
 	// Подписка на каждое зарегестрированое устройство (каждые 2 мин)
 	function subscribeDevices(){
-	// создаем пакет, узнаем длинну, дописываем 00, создаем финальный пакет с фактичекой длинной
+	// создаем пакет, узнаем длинну, дописываем 0000, создаем финальный пакет с фактичекой длинной
 		for(var key in orviboNow){
 			var paket = constOptions.magicWord + '0000' + constOptions.subscribeID + key + constOptions.macPadding + orviboNow[key] + constOptions.macPadding;
 			var length_  = prepareLength(paket);
@@ -418,34 +390,7 @@ function main() {
 		}
 	});
 	
-    var myObjTemp = {
-		type: 'state',
-        common: {
-            name: 'testVariable',
-            role: 'state',
-			type: 'state'
-        },
-        native: {},
-    };
-	
-
-    adapter.setObject('testVariable', myObjTemp);
-	
-	adapter.getObject('testVariable', function(err, obj){
-		obj.ip = 'Viva Cuba!';
-		adapter.setObject ('testVariable', obj);
-	});
-	setTimeout(function(){
-		adapter.log.info('!!!!! - ' + JSON.stringify(orviboNow));
-	    adapter.getObject('testVariable', function(err, state){
-		
-	});
-	}, 2000);
-
-    // in this template all states changes inside the adapters namespace are subscribed
-    
-
-    adapter.checkPassword('admin', 'iobroker', function (res) {
+	adapter.checkPassword('admin', 'iobroker', function (res) {
         console.log('check user admin pw ioboker: ' + res);
     });
 
