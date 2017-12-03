@@ -83,6 +83,9 @@ adapter.getChannelsOf ('devices', function (err, objs) {
 		if(objs[key].common.mac){
 				orviboNow[objs[key].common.mac] = objs[key].common.macreverse;
 		}
+		if(objs[key].common.name == 'Allone'){
+				getAlloneIR(objs[key]);
+		}
 	} 
 });
 
@@ -90,6 +93,21 @@ adapter.getObject(adapter.namespace+'.devices', function(err, obj){
 	obj.orviboDevices = orviboNow;
 	adapter.setObject(adapter.namespace+'.devices', obj);
 });
+
+function getAlloneIR(obj){
+adapter.getStatesOf ('devices', obj.common.mac, function (err, objs) {
+	var IRcodeObject ={};
+	for(var key in objs){		
+		if(objs[key].common.name != 'Online'){
+			IRcodeObject[objs[key]._id] = objs[key].common.name;
+		}
+	} 
+	adapter.getObject(obj._id, function(err, chanel){
+		chanel.native =IRcodeObject;
+		adapter.setObject(obj._id, chanel);
+	});
+});
+}
 
 //Константы
 	var constOptions = {
@@ -125,7 +143,8 @@ function main() {
 		}
 		if(obj.command == 'learnIR'){
 			adapter.sendTo(obj.from, obj.command, 'Reseive "learnIR". Return letter', obj.callback);
-			adapter.getObject(obj.message, function(err, object){
+			adapter.getObject(adapter.namespace+'.devices.' + obj.message, function(err, object){
+				
 				learnIR(object);
 			});
 		} 
@@ -256,8 +275,9 @@ function main() {
 	
 	// Создание команды IR при обучении
 	function createIRcommand(mac, IR){
-		adapter.getObject(mac, function(err, obj){
-			adapter.createState('devices', mac, ('IR_' + obj.native.length), {
+		adapter.getObject(adapter.namespace+'.devices.' + mac, function(err, obj){
+			adapter.log.info('----TEMP: ' + JSON.stringify(obj));
+			adapter.createState('devices', mac, ('IR_' + Math.round(Math.random()*10000)), {
 				role: 'command',
 				name: 'IR comand',
 				write: true,
@@ -366,11 +386,13 @@ function main() {
 		return length_;
 	}
 	
+	// ОТПРАВКА ЗАПРОСА НА ОБУЧЕНИЕ IR 
 	function learnIR(obj){
 		var paket = constOptions.magicWord + '0000' + constOptions.learnID + obj.common.mac + constOptions.macPadding + constOptions.learn;
 		var length_  = prepareLength(paket); 
 		paket = constOptions.magicWord + length_ + constOptions.learnID + obj.common.mac + constOptions.macPadding + constOptions.learn;
 		sendMessage(paket);
+		adapter.log.info('I am send learnIR: ');
 	}
 		
 	adapter.subscribeStates('*');

@@ -91,7 +91,7 @@
 	
 	<table id="tableIR" style = "margin-top: 20px; padding: 10px">
 	</table>
-	
+	<input type="button" value="Обучить IR команде" onclick="learnIR()"/>
 	</div>
 	
 	
@@ -129,7 +129,6 @@
 		table.innerHTML = 'Please wait....';
 		
 		socket.emit('sendTo', 'orvibo.0', 'seachDevices', 'message', function(obj){
-		JSON.stringify(obj);
 			if(obj){
 				myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
 			}
@@ -154,21 +153,15 @@
 		var newTD = document.createElement('td');
 		newTR.appendChild(newTD);
 		newTD.innerHTML = ' ::: ' + objChannel.common.ip;
-		//socket.emit('123', 'ttt');
-		//socket.emit('getStates', 'orvibo.0.devices.', function(err, obj){
-		//	myDiv.innerHTML = '*******' + JSON.stringify(obj);
-		//	myDiv.innerHTML = '*******err:' + err;
-		//});
 	}
 	
 	function learnIR(){
 	
 		tableIR.innerHTML = 'Please wait....';
-		
-		socket.emit('sendTo', 'orvibo.0', 'learnIR', 'mac', function(obj){
-		JSON.stringify(obj);
+		//----TEST--- Временно прописан мак, надо брать из строки
+		socket.emit('sendTo', 'orvibo.0', 'learnIR', 'accf2365c006', function(obj){
 			if(obj){
-				//myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
+				myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
 			}
 		});	
 		
