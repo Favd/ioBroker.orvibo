@@ -77,37 +77,35 @@ adapter.createDevice('devices', {
         native: {}
 });
 
-var orviboNow = {};
-adapter.getChannelsOf ('devices', function (err, objs) { 
-	for(var key in objs){
-		if(objs[key].common.mac){
-				orviboNow[objs[key].common.mac] = objs[key].common.macreverse;
-		}
-		if(objs[key].common.name == 'Allone'){
-				getAlloneIR(objs[key]);
-		}
-	} 
-});
+//--------TEMP----------
+/*		adapter.createChannel('devices', 'ascf654648cc', {
+			common: {
+            name: 'Allone',
+            role: 'state'
+			},
+			native: {},
+			name: 'Allone',
+			type: 'boolean',
+			ip: '192.168.0.151',
+			mac: 'ascf654648cc',
+			macreverse: 'ascf654648cc',
+			model: 'Allone'
+		});
 
-adapter.getObject(adapter.namespace+'.devices', function(err, obj){
-	obj.orviboDevices = orviboNow;
-	adapter.setObject(adapter.namespace+'.devices', obj);
-});
-
-function getAlloneIR(obj){
-adapter.getStatesOf ('devices', obj.common.mac, function (err, objs) {
-	var IRcodeObject ={};
-	for(var key in objs){		
-		if(objs[key].common.name != 'Online'){
-			IRcodeObject[objs[key]._id] = objs[key].common.name;
-		}
-	} 
-	adapter.getObject(obj._id, function(err, chanel){
-		chanel.native =IRcodeObject;
-		adapter.setObject(obj._id, chanel);
-	});
-});
-}
+		adapter.createState('devices', 'ascf654648cc', 'IR_4588', {
+				role: 'command',
+				name: 'IR_4567',
+				write: true,
+				type: 'boolean',
+				common: {
+					name: 'IR_4567',
+					type: 'boolean',
+					role: 'command'
+				},
+				native: {}
+		});
+*/
+		//--------TEMP----------
 
 //Константы
 	var constOptions = {
@@ -133,7 +131,48 @@ adapter.on('ready', function () {
 });
 
 function main() {
+	
 	subscribeDevices();
+	getOrviboNow();	
+	var orviboNow = {};
+	
+	// Запись зарегистрированных устройств в объект  devices
+	function getOrviboNow(){
+		adapter.getChannelsOf ('devices', function (err, objs) { 
+			for(var key in objs){
+				if(objs[key].common.mac){
+					orviboNow[objs[key].common.mac] = objs[key].common.macreverse;
+				}
+				if(objs[key].common.model == 'Allone'){
+						getAlloneIR(objs[key]);
+				}
+			} 
+		});
+		setTimeout(function(){
+			adapter.getObject(adapter.namespace+'.devices', function(err, obj){
+				obj.orviboDevices = orviboNow;
+				adapter.setObject(adapter.namespace+'.devices', obj);
+			});
+		}, 1000);
+	}
+
+	// Запись существующих IR команд в соответствующий объект-устройство
+	function getAlloneIR(obj){
+		adapter.getStatesOf ('devices', obj.common.mac, function (err, objs) {
+			var IRcodeObject ={};
+			for(var key in objs){		
+				if(objs[key].common.name != 'Online'){
+					IRcodeObject[objs[key]._id] = objs[key].common.name;
+				}
+			} 
+			adapter.getObject(obj._id, function(err, chanel){
+				chanel.native =IRcodeObject;
+				adapter.setObject(obj._id, chanel);
+			});
+		});
+	}
+	
+
 	
 	adapter.on('message', function (obj) {
 		adapter.log.info('---------- Adapter reseive Message: ' + JSON.stringify(obj));
@@ -285,6 +324,7 @@ function main() {
 					IRcode: IR
 				}
 			});
+			getAlloneIR(obj);
 		});
 	}
 	
@@ -359,9 +399,9 @@ function main() {
 	
 	// ОТПРАВКА IR КОДА
 	function sendIR(codeIR, obj){
-		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + this.mac + constOptions.macPadding + '65000000' + '1214' + codeIR;
+		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + obj.common.mac + constOptions.macPadding + '65000000' + '1214' + codeIR;
 		var length_  = prepareLength(paket); 
-		paket = constOptions.magicWord + length_ + constOptions.sendIRID + this.mac + constOptions.macPadding + '65000000' + Math.round(Math.random()*10000) + codeIR;
+		paket = constOptions.magicWord + length_ + constOptions.sendIRID + obj.common.mac + constOptions.macPadding + '65000000' + Math.round(Math.random()*10000) + codeIR;
 		sendMessage(paket);
 }
 	

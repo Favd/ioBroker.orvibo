@@ -1,5 +1,4 @@
 <html>
-
 <!-- these 4 files always have to be included -->
 <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css"/>
 <script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
@@ -78,20 +77,16 @@
     </tr></table>
     
     <!--// <p class="translate">on save adapter restarts with new config immediately</p> -->
-	<div id="myDiv">
-	
-	</div>
-	<div id="myDiv1">
-	
-	</div>
+	<div id="myDiv">	</div>
+	<div id="myDiv1">	</div>
+	<div id="listDevices">	<h4>Список устройств:</h4> </div>
 	<div id="main">
-	<table id="table" style = "padding: 10px">
-	</table>
+	<table id="table" style = "padding: 10px">	</table>
 	<input type="button" value="Обновить список устройств" onclick="seachDevices()"/>
 	
-	<table id="tableIR" style = "margin-top: 20px; padding: 10px">
-	</table>
-	<input type="button" value="Обучить IR команде" onclick="learnIR()"/>
+	<div id="listDevicesIR" style = "margin-top: 30px;"> <h4>Список IR устройств:</h4></div>
+	<div id="divIR" style = ""> </div>
+	<input type="button" style = "margin-top: 15px" value="Обновить список IR устройств" onclick="getAlloneIR()"/>
 	</div>
 	
 	
@@ -102,6 +97,8 @@
 
 	
 	function getDevices(){
+		listDevices.innerHTML = '<h4>Список активных устройств:</h4>';
+		table.innerHTML = '';
 		socket.emit('getObject', 'orvibo.0.devices' , function(err, obj){
 			//myDiv.innerHTML = '*******' + JSON.stringify(obj.orviboDevices);
 			for(var key in obj.orviboDevices){
@@ -110,15 +107,18 @@
 					newTR.setAttribute('id', objChannel.common.mac);
 					table.appendChild(newTR);
 					var newTD = document.createElement('td');
-					newTR.appendChild(newTD);
-					newTD.innerHTML = objChannel.common.mac +' ::: ';
-					var newTD = document.createElement('td');
+					newTD.setAttribute('width', '150px');
 					newTR.appendChild(newTD);
 					newTD.innerHTML = objChannel.common.name;
 					var newTD = document.createElement('td');
+					newTD.setAttribute('width', '150px');
 					newTR.appendChild(newTD);
-					newTD.innerHTML = ' ::: ' + objChannel.common.ip;
-					if(objChannel.common.name == 'Allone') getAlloneIR(objChannel);					
+					newTD.innerHTML = objChannel.common.mac;
+					var newTD = document.createElement('td');
+					newTD.setAttribute('width', '150px');
+					newTR.appendChild(newTD);
+					newTD.innerHTML = objChannel.common.ip;
+					//if(objChannel.common.name == 'Allone') getAlloneIR(objChannel);					
 				});
 			}
 		});	
@@ -126,52 +126,145 @@
 	
 	function seachDevices(){
 		//socket.emit('setState', 'orvibo.0.seachDevices', {val: true, ack: false});
-		table.innerHTML = 'Please wait....';
+		listDevices.innerHTML = '<h4>Please wait....</h4>';
 		
 		socket.emit('sendTo', 'orvibo.0', 'seachDevices', 'message', function(obj){
 			if(obj){
-				myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
+				//myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
 			}
 		});	
 		
 		setTimeout(function(){
-			table.innerHTML = '<b>Список активных устройств:</b><br>';
+			listDevices.innerHTML = '<h4>Список активных устройств:</h4><br>';
 			getDevices();
 		}, 3000);
 	}
 	
-	function getAlloneIR(objChannel){
+	function getAlloneIR(){
+		divIR.innerHTML = '';
+		socket.emit('getObject', 'orvibo.0.devices' , function(err, obj){
+			//myDiv.innerHTML = '*******' + JSON.stringify(obj.orviboDevices);
+			for(var key in obj.orviboDevices){
+				socket.emit('getObject', 'orvibo.0.devices.'+key , function(err, objChannel){
+					if(objChannel.common.model == 'Allone') {					
+		
+		newTable = document.createElement('table');
+		newTable.setAttribute('id', objChannel.common.mac);
+		newTable.setAttribute('style', 'margin-top: 20px');
+		divIR.appendChild(newTable);
+		
 		newTR = document.createElement('tr');
-		newTR.setAttribute('id', objChannel.common.mac);
-		tableIR.appendChild(newTR);
+		newTable.appendChild(newTR);
 		var newTD = document.createElement('td');
-		newTR.appendChild(newTD);
-		newTD.innerHTML = objChannel.common.mac +' ::: ';
-		var newTD = document.createElement('td');
+		newTD.setAttribute('width', '150px');
+		newTD.setAttribute('bgcolor', '#d6ffd5');
 		newTR.appendChild(newTD);
 		newTD.innerHTML = objChannel.common.name;
 		var newTD = document.createElement('td');
+		newTD.setAttribute('width', '150px');
+		newTD.setAttribute('bgcolor', '#d6ffd5');
 		newTR.appendChild(newTD);
-		newTD.innerHTML = ' ::: ' + objChannel.common.ip;
+		newTD.innerHTML = objChannel.common.mac;
+		var newTD = document.createElement('td');
+		newTD.setAttribute('width', '150px');
+		newTD.setAttribute('bgcolor', '#d6ffd5');
+		newTR.appendChild(newTD);
+		newTD.innerHTML = objChannel.common.ip;
+		var newTD = document.createElement('td');
+		newTD.setAttribute('width', '150px');
+		newTR.appendChild(newTD);
+		newTD.innerHTML = '<input type="button" style = "width:120px" value="Режим обучения" onclick="learnIR(\'' + objChannel.common.mac + '\')"/>';
+		for (var key in objChannel.native){
+			if(objChannel.native[key]){
+				newTR = document.createElement('tr');
+				newTR.setAttribute('style', 'padding: 15px');
+				newTable.appendChild(newTR);
+				
+				var newTD = document.createElement('td');
+				newTR.appendChild(newTD);
+				
+				
+				var newTD = document.createElement('td');
+				newTR.appendChild(newTD);
+				newTD.innerHTML = 'IR команда:';
+				
+				var newTD = document.createElement('td');
+				newTR.appendChild(newTD);
+				var newInput = document.createElement('input');
+				newTD.appendChild(newInput);
+				newInput.setAttribute('type', 'text');
+				newInput.setAttribute('id', key);
+				newInput.setAttribute('value', objChannel.native[key]);
+				
+				var newTD = document.createElement('td');
+				newTR.appendChild(newTD);
+				var newInputBut = document.createElement('input');
+				newTD.appendChild(newInputBut);
+				newInputBut.setAttribute('type', 'button');
+				newInputBut.setAttribute('value', 'Сохранить Имя');
+				newInputBut.setAttribute('style', 'width: 120px');
+				newInputBut.setAttribute('onclick', 'saveIRname(\'' + objChannel._id + '\', \'' + key + '\')');
+				
+				var newTD = document.createElement('td');
+				newTR.appendChild(newTD);
+				var newInputBut = document.createElement('input');
+				newTD.appendChild(newInputBut);
+				newInputBut.setAttribute('type', 'button');
+				newInputBut.setAttribute('value', 'Удалить команду (объект)');
+				newInputBut.setAttribute('style', 'width: 120px');
+				newInputBut.setAttribute('onclick', 'deleteIR(\'' + objChannel.native[key] + '\', \'' + key + '\')');
+				
+			}
+		}
+		}					
+				});
+			}
+		});	
 	}
 	
-	function learnIR(){
+	// Удалить IR комаду
+	function deleteIR(name, id){
+		var x = document.getElementById(id).value;
+		//myDiv.innerHTML = '*******' + name + '*********' + x + '*************' + id;
+		socket.emit('delObject', id , function(err, obj){
+			
+		});
+	}
 	
-		tableIR.innerHTML = 'Please wait....';
-		//----TEST--- Временно прописан мак, надо брать из строки
-		socket.emit('sendTo', 'orvibo.0', 'learnIR', 'accf2365c006', function(obj){
+	//Изменить (сохранить) имя IR команды
+	function saveIRname(idChanel, id){
+		var x = document.getElementById(id).value;
+		//myDiv.innerHTML = '*******' + name + '*********' + x + '*************' + id;
+		socket.emit('getObject', id , function(err, obj){
+			obj.common.name = x;
+			socket.emit('setObject', id, obj, function(err, mail){
+			});
+		});
+		socket.emit('getObject', idChanel , function(err, obj){
+			obj.native[id] = x;
+			socket.emit('setObject', idChanel, obj, function(err, mail){
+			});
+		});
+	}
+	
+	function learnIR(mac){
+		divIR.innerHTML = '<h2>Кольцо на Allone горит красным.</h2> Нажмите необходимую кнопку на вашем пульте (ТВ, кондиционер и т.д.)';
+		socket.emit('sendTo', 'orvibo.0', 'learnIR', mac, function(obj){
 			if(obj){
-				myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
+				
+				//myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
 			}
 		});	
 		
 		setTimeout(function(){
-			
-		}, 3000);
+			divIR.innerHTML = '';
+			getAlloneIR();
+		}, 5000);
 	}
 	
 	$(document).ready(function(){
         getDevices();
+		getAlloneIR();
     })
 
 	
