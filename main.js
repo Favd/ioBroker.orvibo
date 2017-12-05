@@ -78,7 +78,7 @@ adapter.createDevice('devices', {
 });
 
 //--------TEMP----------
-/*		adapter.createChannel('devices', 'ascf654648cc', {
+/*		adapter.createChannel('devices', 'ascf6546eeee', {
 			common: {
             name: 'Allone',
             role: 'state'
@@ -87,12 +87,12 @@ adapter.createDevice('devices', {
 			name: 'Allone',
 			type: 'boolean',
 			ip: '192.168.0.151',
-			mac: 'ascf654648cc',
-			macreverse: 'ascf654648cc',
+			mac: 'ascf6546eeee',
+			macreverse: 'ascf6546eeee',
 			model: 'Allone'
 		});
 
-		adapter.createState('devices', 'ascf654648cc', 'IR_4588', {
+		adapter.createState('devices', 'ascf6546eeee', 'IR_4588', {
 				role: 'command',
 				name: 'IR_4567',
 				write: true,
@@ -239,20 +239,23 @@ function main() {
 	});
 	
 	adapter.on('stateChange', function (id, state) {
-		id = id.split('.');
-		var ch = id[id.length - 2];
-		var st = id[id.length - 1];
+		var idArr = id.split('.');
+		var ch = idArr[idArr.length - 2];
+		var st = idArr[idArr.length - 1];
+		if(state.val === 1 || state.val === true ) state.val = true;
+		
+		// Вкл - Выкл S20
 		if (st == 'onOff' && !state.ack) {
 			adapter.getObject('devices.'+ch, function(err, obj){
 				setStateS20(state, obj);
 			});
 		}
-		if (st == 'seachDevices') {
-			sendSeach();
-		}
-		if (st == 'learnIRcom') {
-			adapter.getObject('devices.'+ch, function(err, obj){
-				learnIR(obj);
+		
+		// Change state IR  -  Send IR
+		if (st.substr(0,2) == 'IR' && state.val===true) {
+			adapter.getObject(id, function(err, obj){
+				sendIR(obj, ch);
+				adapter.log.info('Change state: ' + ch + '.' + st + '  -  Send IR');
 			});
 		}
 	});
@@ -315,7 +318,7 @@ function main() {
 	// Создание команды IR при обучении
 	function createIRcommand(mac, IR){
 		adapter.getObject(adapter.namespace+'.devices.' + mac, function(err, obj){
-			adapter.log.info('----TEMP: ' + JSON.stringify(obj));
+			adapter.log.info('---- createIRcommand: ' + JSON.stringify(obj));
 			adapter.createState('devices', mac, ('IR_' + Math.round(Math.random()*10000)), {
 				role: 'command',
 				name: 'IR comand',
@@ -324,7 +327,9 @@ function main() {
 					IRcode: IR
 				}
 			});
-			getAlloneIR(obj);
+			setTimeout(function(){
+				getAlloneIR(obj);
+			}, 1000);
 		});
 	}
 	
@@ -394,16 +399,17 @@ function main() {
 			paket = constOptions.magicWord + length_ + constOptions.subscribeID + key + constOptions.macPadding + orviboNow[key] + constOptions.macPadding;
 			sendMessage(paket);
 		}
-		adapter.emit('subscribe - is done', paket);
+		adapter.emit('subscribe - is done: ', paket);
 	}
 	
 	// ОТПРАВКА IR КОДА
-	function sendIR(codeIR, obj){
-		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + obj.common.mac + constOptions.macPadding + '65000000' + '1214' + codeIR;
+	function sendIR(obj, ch){
+		var codeIR = obj.native.IRcode;
+		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + '1214' + codeIR;
 		var length_  = prepareLength(paket); 
-		paket = constOptions.magicWord + length_ + constOptions.sendIRID + obj.common.mac + constOptions.macPadding + '65000000' + Math.round(Math.random()*10000) + codeIR;
+		paket = constOptions.magicWord + length_ + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + Math.round(Math.random()*10000) + codeIR;
 		sendMessage(paket);
-}
+	}
 	
 	//Send Message
 	function sendMessage(paket){
@@ -419,10 +425,10 @@ function main() {
 		if((paket.length/2).toString(16).length == 1){
 			var length_ = '000' + (paket.length/2).toString(16);
 		}else if((paket.length/2).toString(16).length == 2){
-			length_ = length_ = '00' + (paket.length/2).toString(16);
+			length_ = '00' + (paket.length/2).toString(16);
 		}else if((paket.length/2).toString(16).length == 3){
-			length_ = length_ = '0' + (paket.length/2).toString(16);
-		}
+			length_ = '0' + (paket.length/2).toString(16);
+		}else length_ = (paket.length/2).toString(16);
 		return length_;
 	}
 	
