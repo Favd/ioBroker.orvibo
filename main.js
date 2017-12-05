@@ -93,7 +93,7 @@ adapter.createDevice('devices', {
 		learn: '010000000000',
 		sendIRID: '6963',
 		sendIR: ''
-	}
+	};
 	
 // is called when databases are connected and adapter received configuration.
 // start here!
@@ -162,14 +162,14 @@ function main() {
 		
 	// Таймер подписки устройств
 	setInterval(function(){
-		subscribeDevices()
+		subscribeDevices();
 	}, 120000);
 	
 	// Сервер входящих UDP + обработка событий
 	socket.on('message',function(msg,info){
 		// if from us - return
 		if (info.address == tools.findIPs()[1]) return;
-		
+		var mac;
 		//adapter.log.info('IP servera: ' + tools.findIPs()[1]);
 		adapter.log.info('Data received: ' + msg.toString('hex'));
 		adapter.log.info('Received ' + msg.length + ' bytes from ' + info.address + ' :' +info.port);
@@ -177,7 +177,7 @@ function main() {
 		//Обработка ответа о поиске. Создание обекта с данными IP и MAC
 		if (msg.toString('hex').substr(8,4) == '7161'){
 			adapter.log.info('temp - point 1 ' + msg.toString('hex'));
-			var mac = msg.toString('hex').substr(14,12);
+			mac = msg.toString('hex').substr(14,12);
 			for(var key in orviboNow){
 				if (key == mac) return;
 			}
@@ -188,20 +188,20 @@ function main() {
 		//Обработка ответа о подписке. Изменение состояния Онлайн и состояния сокета
 		if (msg.toString('hex').substr(8,4) == '636c'){
 			//var model = msg.toString('hex').substr(62,6);
-			var mac = msg.toString('hex').substr(12,12);
+			mac = msg.toString('hex').substr(12,12);
 			//var state = msg.toString('hex').substr(-1,1); 
 			adapter. setState('devices.'+mac+'.Online', 1, true);
 		}
 		
 		//Обработка ответа о ВКЛ ВЫКЛ сокета. Изменение состояния Онлайн и состояния сокета
 		if (msg.toString('hex').substr(8,4) == '7366'){
-			var mac = msg.toString('hex').substr(12,12);
+			mac = msg.toString('hex').substr(12,12);
 			adapter. setState('devices.'+mac+'.onOff', msg.toString('hex').substr(-1,1), true);
 		}
 		
 		//Обработка ответа Возврат IR кода при обучении.
 		if (msg.toString('hex').substr(8,4) == '6c73' && msg.toString('hex').length > 70){
-			var mac = msg.toString('hex').substr(12,12);
+			mac = msg.toString('hex').substr(12,12);
 			var IR = msg.toString('hex').substr(48);
 			adapter.log.info('Получен msg - ' + msg.toString('hex'));
 			adapter.log.info('Получен IR - ' + IR);
@@ -307,14 +307,16 @@ function main() {
 	
 	// ИМЕНЕНИЕ СТАТУСА s20
 	function setStateS20(state, obj){
+		var length_;
+		var paket;
 		if(state.val == 1){
-			var paket = constOptions.magicWord + '0000' + constOptions.onoffID + obj.common.mac + constOptions.macPadding + constOptions.on;
-			var length_  = prepareLength(paket); 
+			paket = constOptions.magicWord + '0000' + constOptions.onoffID + obj.common.mac + constOptions.macPadding + constOptions.on;
+			length_  = prepareLength(paket); 
 			paket = constOptions.magicWord + length_ + constOptions.onoffID + obj.common.mac + constOptions.macPadding + constOptions.on;
 			sendMessage(paket);		
 		} else if(state.val == 0){
-			var paket = constOptions.magicWord + '0000' + constOptions.onoffID + obj.common.mac + constOptions.macPadding + constOptions.off;
-			var length_  = prepareLength(paket); 
+			paket = constOptions.magicWord + '0000' + constOptions.onoffID + obj.common.mac + constOptions.macPadding + constOptions.off;
+			length_  = prepareLength(paket); 
 			paket = constOptions.magicWord + length_ + constOptions.onoffID + obj.common.mac + constOptions.macPadding + constOptions.off;
 			sendMessage(paket);		
 		}
@@ -357,7 +359,7 @@ function main() {
 			mac: msg.substr(14,12),
 			macreverse: mcr,
 			model: model
-		}
+		};
 	return obj;
 	}
 	
@@ -370,7 +372,7 @@ function main() {
 			paket = constOptions.magicWord + length_ + constOptions.subscribeID + key + constOptions.macPadding + orviboNow[key] + constOptions.macPadding;
 			sendMessage(paket);
 		}
-		adapter.emit('subscribe - is done: ', paket);
+		
 	}
 	
 	// ОТПРАВКА IR КОДА
@@ -393,8 +395,9 @@ function main() {
 	}
 	
 	function prepareLength(paket){
+		var length_;
 		if((paket.length/2).toString(16).length == 1){
-			var length_ = '000' + (paket.length/2).toString(16);
+			length_ = '000' + (paket.length/2).toString(16);
 		}else if((paket.length/2).toString(16).length == 2){
 			length_ = '00' + (paket.length/2).toString(16);
 		}else if((paket.length/2).toString(16).length == 3){

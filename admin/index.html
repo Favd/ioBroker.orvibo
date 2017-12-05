@@ -110,16 +110,16 @@
 					newTD.setAttribute('width', '150px');
 					newTR.appendChild(newTD);
 					newTD.innerHTML = objChannel.common.name;
-					var newTD = document.createElement('td');
+					newTD = document.createElement('td');
 					newTD.setAttribute('width', '150px');
 					newTR.appendChild(newTD);
 					newTD.innerHTML = objChannel.common.mac;
-					var newTD = document.createElement('td');
+					newTD = document.createElement('td');
 					newTD.setAttribute('width', '175px');
 					newTR.appendChild(newTD);
 					newTD.innerHTML = objChannel.common.ip;
 					
-					var newTD = document.createElement('td');
+					newTD = document.createElement('td');
 					newTR.appendChild(newTD);
 					var newInputBut = document.createElement('input');
 					newTD.appendChild(newInputBut);
@@ -168,17 +168,17 @@
 		newTD.setAttribute('bgcolor', '#d6ffd5');
 		newTR.appendChild(newTD);
 		newTD.innerHTML = objChannel.common.name;
-		var newTD = document.createElement('td');
+		newTD = document.createElement('td');
 		newTD.setAttribute('width', '150px');
 		newTD.setAttribute('bgcolor', '#d6ffd5');
 		newTR.appendChild(newTD);
 		newTD.innerHTML = objChannel.common.mac;
-		var newTD = document.createElement('td');
+		newTD = document.createElement('td');
 		newTD.setAttribute('width', '175px');
 		newTD.setAttribute('bgcolor', '#d6ffd5');
 		newTR.appendChild(newTD);
 		newTD.innerHTML = objChannel.common.ip;
-		var newTD = document.createElement('td');
+		newTD = document.createElement('td');
 		newTD.setAttribute('width', '150px');
 		newTR.appendChild(newTD);
 		newTD.innerHTML = '<input type="button" style = "width:120px" value="Режим обучения" onclick="learnIR(\'' + objChannel.common.mac + '\')"/>';
@@ -188,15 +188,15 @@
 				newTR.setAttribute('style', 'padding: 15px');
 				newTable.appendChild(newTR);
 				
-				var newTD = document.createElement('td');
+				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
 				
 				
-				var newTD = document.createElement('td');
+				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
 				newTD.innerHTML = 'IR команда:';
 				
-				var newTD = document.createElement('td');
+				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
 				var newInput = document.createElement('input');
 				newTD.appendChild(newInput);
@@ -204,7 +204,7 @@
 				newInput.setAttribute('id', key);
 				newInput.setAttribute('value', objChannel.native[key]);
 				
-				var newTD = document.createElement('td');
+				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
 				var newInputBut = document.createElement('input');
 				newTD.appendChild(newInputBut);
@@ -213,9 +213,9 @@
 				newInputBut.setAttribute('style', 'width: 120px');
 				newInputBut.setAttribute('onclick', 'saveIRname(\'' + objChannel._id + '\', \'' + key + '\')');
 				
-				var newTD = document.createElement('td');
+				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
-				var newInputBut = document.createElement('input');
+				newInputBut = document.createElement('input');
 				newTD.appendChild(newInputBut);
 				newInputBut.setAttribute('type', 'button');
 				newInputBut.setAttribute('value', 'Удалить команду (объект)');
@@ -301,7 +301,7 @@
 	$(document).ready(function(){
         getDevices();
 		getAlloneIR();
-    })
+    });
 
 	
 </script>
