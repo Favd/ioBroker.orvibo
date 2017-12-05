@@ -19,28 +19,6 @@ adapter.on('unload', function (callback) {
     }
 });
 
-// is called if a subscribed object changes
-adapter.on('objectChange', function (id, obj) {
-    // Warning, obj can be null if it was deleted
-    adapter.log.info('objectChange ' + id + ' ' + JSON.stringify(obj));
-});
-
-// is called if a subscribed state changes
-adapter.on('stateChange', function (id, state) {
-    // Warning, state can be null if it was deleted
-    adapter.log.info('stateChange ' + id);
-
-    // you can use the ack flag to detect if it is status (true) or command (false)
-    if (state && !state.ack) {
-        adapter.log.info('ack is not set!');
-    }
-});
-
-
-adapter.on('test', function (obj) {
-	adapter.log.info('comand test' + obj);
-});
-
 adapter.createDevice('devices', {
         common: {
             name: 'devices',
@@ -48,37 +26,7 @@ adapter.createDevice('devices', {
         native: {}
 });
 
-//--------TEMP----------
-/*		adapter.createChannel('devices', 'ascf6546eeee', {
-			common: {
-            name: 'Allone',
-            role: 'state'
-			},
-			native: {},
-			name: 'Allone',
-			type: 'boolean',
-			ip: '192.168.0.151',
-			mac: 'ascf6546eeee',
-			macreverse: 'ascf6546eeee',
-			model: 'Allone'
-		});
-
-		adapter.createState('devices', 'ascf6546eeee', 'IR_4588', {
-				role: 'command',
-				name: 'IR_4567',
-				write: true,
-				type: 'boolean',
-				common: {
-					name: 'IR_4567',
-					type: 'boolean',
-					role: 'command'
-				},
-				native: {}
-		});
-*/
-		//--------TEMP----------
-
-//Константы
+// Constants
 	var constOptions = {
 		port: 10000,
 		broadcastIP: "255.255.255.255",
@@ -95,7 +43,6 @@ adapter.createDevice('devices', {
 		sendIR: ''
 	};
 	
-// is called when databases are connected and adapter received configuration.
 // start here!
 adapter.on('ready', function () {
     main();
@@ -103,11 +50,10 @@ adapter.on('ready', function () {
 
 function main() {
 	
-	subscribeDevices();
-	getOrviboNow();	
 	var orviboNow = {};
+	getOrviboNow();
 	
-	// Запись зарегистрированных устройств в объект  devices
+	// Recording Registered Devices to a Device Object
 	function getOrviboNow(){
 		adapter.getChannelsOf ('devices', function (err, objs) { 
 			for(var key in objs){
@@ -127,7 +73,7 @@ function main() {
 		}, 1000);
 	}
 
-	// Запись существующих IR команд в соответствующий объект-устройство
+	// Write existing IR commands to the corresponding device object
 	function getAlloneIR(obj){
 		adapter.getStatesOf ('devices', obj.common.mac, function (err, objs) {
 			var IRcodeObject ={};
@@ -144,7 +90,7 @@ function main() {
 	}
 	
 
-	
+	// Receiving and processing commands from admin settings window
 	adapter.on('message', function (obj) {
 		adapter.log.info('---------- Adapter reseive Message: ' + JSON.stringify(obj));
 		if(obj.command == 'seachDevices'){
@@ -153,19 +99,19 @@ function main() {
 		}
 		if(obj.command == 'learnIR'){
 			adapter.sendTo(obj.from, obj.command, 'Reseive "learnIR". Return letter', obj.callback);
-			adapter.getObject(adapter.namespace+'.devices.' + obj.message, function(err, object){
-				
+			adapter.getObject(adapter.namespace+'.devices.' + obj.message, function(err, object){				
 				learnIR(object);
 			});
 		} 
 	});
 		
-	// Таймер подписки устройств
+	// Subscription timer & first subscription
+	setTimeout(function(){subscribeDevices()}, 3000);
 	setInterval(function(){
 		subscribeDevices();
 	}, 120000);
 	
-	// Сервер входящих UDP + обработка событий
+	// Server incoming UDP + event handling
 	socket.on('message',function(msg,info){
 		// if from us - return
 		if (info.address == tools.findIPs()[1]) return;
@@ -174,7 +120,7 @@ function main() {
 		adapter.log.info('Data received: ' + msg.toString('hex'));
 		adapter.log.info('Received ' + msg.length + ' bytes from ' + info.address + ' :' +info.port);
 				
-		//Обработка ответа о поиске. Создание обекта с данными IP и MAC
+		// Handling the search response. Call "createOrvibo"
 		if (msg.toString('hex').substr(8,4) == '7161'){
 			adapter.log.info('temp - point 1 ' + msg.toString('hex'));
 			mac = msg.toString('hex').substr(14,12);
@@ -185,7 +131,7 @@ function main() {
 			createOrvibo(obj);
 		}
 		
-		//Обработка ответа о подписке. Изменение состояния Онлайн и состояния сокета
+		// Handling a subscription response. Changing the Online Status and the Status of the Socket
 		if (msg.toString('hex').substr(8,4) == '636c'){
 			//var model = msg.toString('hex').substr(62,6);
 			mac = msg.toString('hex').substr(12,12);
@@ -193,13 +139,13 @@ function main() {
 			adapter. setState('devices.'+mac+'.Online', 1, true);
 		}
 		
-		//Обработка ответа о ВКЛ ВЫКЛ сокета. Изменение состояния Онлайн и состояния сокета
+		// Handling the answer about ON OFF the socket.
 		if (msg.toString('hex').substr(8,4) == '7366'){
 			mac = msg.toString('hex').substr(12,12);
 			adapter. setState('devices.'+mac+'.onOff', msg.toString('hex').substr(-1,1), true);
 		}
 		
-		//Обработка ответа Возврат IR кода при обучении.
+		//Response processing - Return of IR code during training. Call "createIRcommand"
 		if (msg.toString('hex').substr(8,4) == '6c73' && msg.toString('hex').length > 70){
 			mac = msg.toString('hex').substr(12,12);
 			var IR = msg.toString('hex').substr(48);
@@ -209,20 +155,21 @@ function main() {
 		}
 	});
 	
+	// Processing State Changes
 	adapter.on('stateChange', function (id, state) {
 		var idArr = id.split('.');
 		var ch = idArr[idArr.length - 2];
 		var st = idArr[idArr.length - 1];
 		if(state.val === 1 || state.val === true ) state.val = true;
 		
-		// Вкл - Выкл S20
+		// On - Off socket S20
 		if (st == 'onOff' && !state.ack) {
 			adapter.getObject('devices.'+ch, function(err, obj){
 				setStateS20(state, obj);
 			});
 		}
 		
-		// Change state IR  -  Send IR
+		// Change state IR  ->  Send IR
 		if (st.substr(0,2) == 'IR' && state.val===true) {
 			adapter.getObject(id, function(err, obj){
 				sendIR(obj, ch);
@@ -231,7 +178,7 @@ function main() {
 		}
 	});
 
-	// Функция создание объекта
+	// Creating a device object
 	function createOrvibo(obj){
 		
 		adapter.createChannel('devices', obj.mac, obj);
@@ -286,7 +233,7 @@ function main() {
 	}
 	
 	
-	// Создание команды IR при обучении
+	// Creating an IR command for training
 	function createIRcommand(mac, IR){
 		adapter.getObject(adapter.namespace+'.devices.' + mac, function(err, obj){
 			adapter.log.info('---- createIRcommand: ' + JSON.stringify(obj));
@@ -305,7 +252,7 @@ function main() {
 	}
 	
 	
-	// ИМЕНЕНИЕ СТАТУСА s20
+	// On - Off S20
 	function setStateS20(state, obj){
 		var length_;
 		var paket;
@@ -322,20 +269,19 @@ function main() {
 		}
 	}
 	
-	// Поиск устройств
+	// Device Search
 	function sendSeach(){
-	var msg = '686400067161';
-	msg = Buffer.from(msg,'hex');
-	socket.send(msg, 10000, '192.168.0.255', function(err){
-		if(err){
-			adapter.log.error('error: ' + err);
-		}
-	});
-	adapter.log.info('seach send');
-	//this.emit('subscribe - ', args.mac);
+		var msg = '686400067161';
+		msg = Buffer.from(msg,'hex');
+		socket.send(msg, 10000, '192.168.0.255', function(err){
+			if(err){
+				adapter.log.error('error: ' + err);
+			}
+		});
+		adapter.log.info('seach send');
 	}
 	
-	// вытаскивание ip и mac из сообщения
+	// Processing of UDP messages from the device
 	function messageToObject(msg, info){
 		msg = msg.toString('hex');
 		var mac = msg.substr(14,12);
@@ -363,19 +309,17 @@ function main() {
 	return obj;
 	}
 	
-	// Подписка на каждое зарегестрированое устройство (каждые 2 мин)
+	// Subscription to each registered device
 	function subscribeDevices(){
-	// создаем пакет, узнаем длинну, дописываем 0000, создаем финальный пакет с фактичекой длинной
 		for(var key in orviboNow){
 			var paket = constOptions.magicWord + '0000' + constOptions.subscribeID + key + constOptions.macPadding + orviboNow[key] + constOptions.macPadding;
 			var length_  = prepareLength(paket);
 			paket = constOptions.magicWord + length_ + constOptions.subscribeID + key + constOptions.macPadding + orviboNow[key] + constOptions.macPadding;
 			sendMessage(paket);
-		}
-		
+		}	
 	}
 	
-	// ОТПРАВКА IR КОДА
+	// Send IR code
 	function sendIR(obj, ch){
 		var codeIR = obj.native.IRcode;
 		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + '1214' + codeIR;
@@ -394,6 +338,7 @@ function main() {
 		});
 	}
 	
+	//the length of the packet to be sent in the form of XXXX
 	function prepareLength(paket){
 		var length_;
 		if((paket.length/2).toString(16).length == 1){
@@ -406,7 +351,7 @@ function main() {
 		return length_;
 	}
 	
-	// ОТПРАВКА ЗАПРОСА НА ОБУЧЕНИЕ IR 
+	// SENDING A REQUEST FOR TRAINING IR
 	function learnIR(obj){
 		var paket = constOptions.magicWord + '0000' + constOptions.learnID + obj.common.mac + constOptions.macPadding + constOptions.learn;
 		var length_  = prepareLength(paket); 
@@ -417,21 +362,6 @@ function main() {
 		
 	adapter.subscribeStates('*');
 	
-	//************ !!! -- TEMP -- !!! *****************
-	//sendSeach();
-	//subscribeDevices();
-	
-	
-	//************ !!! -- TEMP -- !!! *****************
-	
-	
-	adapter.getForeignObjects (adapter.namespace + '.*', function (err, objs) {
-		//adapter.log.info (JSON.stringify (objs)); 
-		for(var key in objs){
-			//adapter.log.info (objs[key].ip);
-		}
-	});
-	
 	adapter.checkPassword('admin', 'iobroker', function (res) {
         console.log('check user admin pw ioboker: ' + res);
     });
@@ -439,7 +369,4 @@ function main() {
     adapter.checkGroup('admin', 'admin', function (res) {
         console.log('check group user admin group admin: ' + res);
     });
-
-
-
 }
