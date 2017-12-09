@@ -73,7 +73,7 @@ function main() {
 		}, 1000);
 	}
 
-	// Write existing IR commands to the corresponding device object
+	// Write existing RF commands to the corresponding device object
 	function getAlloneIR(obj){
 		adapter.getStatesOf ('devices', obj.common.mac, function (err, objs) {
 			var IRcodeObject ={};
@@ -101,14 +101,32 @@ function main() {
 			adapter.getObject(adapter.namespace+'.devices.' + obj.message, function(err, object){				
 				learnIR(object);
 			});
-		} 
+		}
+		
+		if(obj.command == 'deleteOrvibo'){
+			adapter.sendTo(obj.from, obj.command, 'Reseive "deleteOrvibo". Return letter', obj.callback);
+			var idArr = obj.message.split('.');
+			var ch = idArr[idArr.length - 1];
+			adapter.getStatesOf('devices', ch, function(err, obj){
+				for (var i = 0; i<obj.length; i++){
+					adapter.deleteState('devices', ch, obj[i]._id);
+					adapter.log.info('---- delete: ' + obj[i]._id);
+				}
+			});
+			adapter.delObject(obj.message, function(err){
+				adapter.log.info('---- delete: ' + obj.message);
+			});
+			for (var key in orviboNow){
+				if (key == ch) delete orviboNow[ch];
+			}
+		}
 	});
 		
 	// Subscription timer & first subscription
 	setTimeout(function(){subscribeDevices()}, 3000);
 	setInterval(function(){
 		subscribeDevices();
-	}, 120000);
+	}, 180000);
 	
 	// Server incoming UDP + event handling
 	socket.on('message',function(msg,info){
@@ -140,7 +158,7 @@ function main() {
 			adapter. setState('devices.'+mac+'.onOff', msg.toString('hex').substr(-1,1), true);
 		}
 		
-		//Response processing - Return of IR code during training. Call "createIRcommand"
+		//Response processing - Return of RF code during training. Call "createIRcommand"
 		if (msg.toString('hex').substr(8,4) == '6c73' && msg.toString('hex').length > 70){
 			mac = msg.toString('hex').substr(12,12);
 			var IR = msg.toString('hex').substr(48);
@@ -153,6 +171,7 @@ function main() {
 		var idArr = id.split('.');
 		var ch = idArr[idArr.length - 2];
 		var st = idArr[idArr.length - 1];
+		if (state == null) return;
 		if(state.val == 1 || state.val === true ) state.val = true;
 		
 		// On - Off socket S20
@@ -162,7 +181,7 @@ function main() {
 			});
 		}
 		
-		// Change state IR  ->  Send IR
+		// Change state RF  ->  Send RF
 		if (st.substr(0,2) == 'IR' && state.val===true) {
 			adapter.getObject(id, function(err, obj){
 				sendIR(obj, ch);
@@ -177,7 +196,7 @@ function main() {
 	function createOrvibo(obj){
 		
 		adapter.createChannel('devices', obj.mac, obj);
-		adapter.log.info('device - ' + obj.model);
+		adapter.log.info('---- New device: ' + obj.model);
 		
 		if(obj.model =='socketS20'){
 			adapter.createState('devices', obj.mac, 'onOff', {
@@ -219,7 +238,7 @@ function main() {
 			},
 			native: {}
 		});
-		adapter.log.info('object bild - ' + obj.mac);
+		
 		orviboNow[obj.mac] = obj.macreverse;
 		adapter.getObject(adapter.namespace+'.devices', function(err, obj){
 			obj.orviboDevices = orviboNow;
@@ -228,10 +247,10 @@ function main() {
 	}
 	
 	
-	// Creating an IR command for training
+	// Creating an RF command for training
 	function createIRcommand(mac, IR){
 		adapter.getObject(adapter.namespace+'.devices.' + mac, function(err, obj){
-			adapter.log.info('---- createIRcommand');
+			adapter.log.info('---- create RF command');
 			adapter.createState('devices', mac, ('IR_' + Math.round(Math.random()*10000)), {
 				role: 'command',
 				name: 'IR comand',
@@ -311,16 +330,17 @@ function main() {
 			var length_  = prepareLength(paket);
 			paket = constOptions.magicWord + length_ + constOptions.subscribeID + key + constOptions.macPadding + orviboNow[key] + constOptions.macPadding;
 			sendMessage(paket);
+			adapter.log.info('---- subscribeDevices:' + key);
 		}	
 	}
 	
-	// Send IR code
+	// Send RF code
 	function sendIR(obj, ch){
 		var codeIR = obj.common.native.IRcode;
 		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + '1214' + codeIR;
 		var length_  = prepareLength(paket); 
 		paket = constOptions.magicWord + length_ + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + Math.round(Math.random()*10000) + codeIR;
-		adapter.log.info('---- sendIR');
+		adapter.log.info('---- send RF');
 		sendMessage(paket);
 	}
 	
@@ -330,7 +350,7 @@ function main() {
 		socket.send(msg, 10000, '192.168.0.255', function(err){
 			if(err){
 				console.log('error: ' + err);
-			}adapter.log.info('Send message to Orvibo: ' + paket);
+			}//adapter.log.info('Send message to Orvibo: ' + paket);
 		});
 	}
 	
@@ -347,13 +367,13 @@ function main() {
 		return length_;
 	}
 	
-	// SENDING A REQUEST FOR TRAINING IR
+	// SENDING A REQUEST FOR TRAINING RF
 	function learnIR(obj){
 		var paket = constOptions.magicWord + '0000' + constOptions.learnID + obj.common.mac + constOptions.macPadding + constOptions.learn;
 		var length_  = prepareLength(paket); 
 		paket = constOptions.magicWord + length_ + constOptions.learnID + obj.common.mac + constOptions.macPadding + constOptions.learn;
 		sendMessage(paket);
-		adapter.log.info('---- Send learnIR');
+		adapter.log.info('---- Send: learn RF');
 	}
 		
 	adapter.subscribeStates('*');

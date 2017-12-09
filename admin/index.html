@@ -84,7 +84,7 @@
 	<table id="table" style = "">	</table>
 	<input type="button" value="Обновить список устройств" onclick="seachDevices()"/>
 	
-	<div id="listDevicesIR" style = "margin-top: 30px;"> <h4>Список IR устройств:</h4></div>
+	<div id="listDevicesIR" style = "margin-top: 30px;"> <h4>Список Allone устройств:</h4></div>
 	<div id="divIR" style = ""> </div>
 	<input type="button" style = "margin-top: 15px" value="Обновить список IR устройств" onclick="getAlloneIR()"/>
 	</div>
@@ -194,7 +194,7 @@
 				
 				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
-				newTD.innerHTML = 'IR команда:';
+				newTD.innerHTML = 'RF команда:';
 				
 				newTD = document.createElement('td');
 				newTR.appendChild(newTD);
@@ -230,7 +230,7 @@
 		});	
 	}
 	
-	// Удалить IR комаду
+	// Удалить RF комаду
 	function deleteIR(idChanel, id){
 		var x = document.getElementById(id).value;
 		//myDiv.innerHTML = '*******' + name + '*********' + x + '*************' + id;
@@ -252,8 +252,11 @@
 	function deleteOrvibo(idChanel, id){
 		var x = document.getElementById(id).value;
 		//myDiv.innerHTML = '*******' + name + '*********' + x + '*************' + id;
-		socket.emit('delObject', idChanel , function(err, obj){			
-		});
+		socket.emit('sendTo', 'orvibo.0', 'deleteOrvibo', idChanel, function(obj){
+			if(obj){
+				//myDiv.innerHTML = 'Reseive from adapter: ' + JSON.stringify(obj);
+			}
+		});	
 		socket.emit('getObject', 'orvibo.0.devices' , function(err, obj){
 			//myDiv.innerHTML = JSON.stringify(obj);
 			delete obj.orviboDevices[id];
@@ -267,7 +270,7 @@
 		}, 1000);	
 	}
 	
-	//Изменить (сохранить) имя IR команды
+	//Изменить (сохранить) имя RF команды
 	function saveIRname(idChanel, id){
 		var x = document.getElementById(id).value;
 		//myDiv.innerHTML = '*******' + name + '*********' + x + '*************' + id;
@@ -284,7 +287,7 @@
 	}
 	
 	function learnIR(mac){
-		divIR.innerHTML = '<h2>Кольцо на Allone горит красным.</h2> 1. Нажмите необходимую кнопку на вашем пульте (ТВ, кондиционер и т.д.)<br>2. Кольцо горит синим<br>3. Обновите список IR устройств';
+		divIR.innerHTML = '<h2>Кольцо на Allone горит красным.</h2> 1. Нажмите необходимую кнопку на вашем пульте (ТВ, кондиционер и т.д.)<br>2. Кольцо горит синим<br>3. Обновите список RF устройств';
 		socket.emit('sendTo', 'orvibo.0', 'learnIR', mac, function(obj){
 			if(obj){
 				
