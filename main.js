@@ -92,7 +92,6 @@ function main() {
 
 	// Receiving and processing commands from admin settings window
 	adapter.on('message', function (obj) {
-		adapter.log.info('---------- Adapter reseive Message: ' + JSON.stringify(obj));
 		if(obj.command == 'seachDevices'){
 			adapter.sendTo(obj.from, obj.command, 'Reseive "seachDevices". Return letter', obj.callback);
 			sendSeach();
@@ -116,13 +115,11 @@ function main() {
 		// if from us - return
 		if (info.address == tools.findIPs()[1]) return;
 		var mac;
-		//adapter.log.info('IP servera: ' + tools.findIPs()[1]);
-		adapter.log.info('Data received: ' + msg.toString('hex'));
-		adapter.log.info('Received ' + msg.length + ' bytes from ' + info.address + ' :' +info.port);
+		//adapter.log.info('Data received: ' + msg.toString('hex'));
+		//adapter.log.info('Received ' + msg.length + ' bytes from ' + info.address + ' :' +info.port);
 				
 		// Handling the search response. Call "createOrvibo"
 		if (msg.toString('hex').substr(8,4) == '7161'){
-			adapter.log.info('temp - point 1 ' + msg.toString('hex'));
 			mac = msg.toString('hex').substr(14,12);
 			for(var key in orviboNow){
 				if (key == mac) return;
@@ -133,9 +130,7 @@ function main() {
 		
 		// Handling a subscription response. Changing the Online Status and the Status of the Socket
 		if (msg.toString('hex').substr(8,4) == '636c'){
-			//var model = msg.toString('hex').substr(62,6);
 			mac = msg.toString('hex').substr(12,12);
-			//var state = msg.toString('hex').substr(-1,1); 
 			adapter. setState('devices.'+mac+'.Online', 1, true);
 		}
 		
@@ -149,8 +144,6 @@ function main() {
 		if (msg.toString('hex').substr(8,4) == '6c73' && msg.toString('hex').length > 70){
 			mac = msg.toString('hex').substr(12,12);
 			var IR = msg.toString('hex').substr(48);
-			adapter.log.info('Получен msg - ' + msg.toString('hex'));
-			adapter.log.info('Получен IR - ' + IR);
 			createIRcommand(mac, IR);
 		}
 	});
@@ -160,7 +153,7 @@ function main() {
 		var idArr = id.split('.');
 		var ch = idArr[idArr.length - 2];
 		var st = idArr[idArr.length - 1];
-		if(state.val === 1 || state.val === true ) state.val = true;
+		if(state.val == 1 || state.val === true ) state.val = true;
 		
 		// On - Off socket S20
 		if (st == 'onOff' && !state.ack) {
@@ -173,8 +166,10 @@ function main() {
 		if (st.substr(0,2) == 'IR' && state.val===true) {
 			adapter.getObject(id, function(err, obj){
 				sendIR(obj, ch);
-				adapter.log.info('Change state: ' + ch + '.' + st + '  -  Send IR');
 			});
+			setTimeout(function(){
+				adapter.setState(id, false);
+			}, 500);
 		}
 	});
 
@@ -236,7 +231,7 @@ function main() {
 	// Creating an IR command for training
 	function createIRcommand(mac, IR){
 		adapter.getObject(adapter.namespace+'.devices.' + mac, function(err, obj){
-			adapter.log.info('---- createIRcommand: ' + JSON.stringify(obj));
+			adapter.log.info('---- createIRcommand');
 			adapter.createState('devices', mac, ('IR_' + Math.round(Math.random()*10000)), {
 				role: 'command',
 				name: 'IR comand',
@@ -278,7 +273,7 @@ function main() {
 				adapter.log.error('error: ' + err);
 			}
 		});
-		adapter.log.info('seach send');
+		//adapter.log.info('seach send');
 	}
 	
 	// Processing of UDP messages from the device
@@ -321,10 +316,11 @@ function main() {
 	
 	// Send IR code
 	function sendIR(obj, ch){
-		var codeIR = obj.native.IRcode;
+		var codeIR = obj.common.native.IRcode;
 		var paket = constOptions.magicWord + '0000' + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + '1214' + codeIR;
 		var length_  = prepareLength(paket); 
 		paket = constOptions.magicWord + length_ + constOptions.sendIRID + ch + constOptions.macPadding + '65000000' + Math.round(Math.random()*10000) + codeIR;
+		adapter.log.info('---- sendIR');
 		sendMessage(paket);
 	}
 	
@@ -334,7 +330,7 @@ function main() {
 		socket.send(msg, 10000, '192.168.0.255', function(err){
 			if(err){
 				console.log('error: ' + err);
-			}adapter.log.info('I am send message: ' + paket);
+			}adapter.log.info('Send message to Orvibo: ' + paket);
 		});
 	}
 	
@@ -357,7 +353,7 @@ function main() {
 		var length_  = prepareLength(paket); 
 		paket = constOptions.magicWord + length_ + constOptions.learnID + obj.common.mac + constOptions.macPadding + constOptions.learn;
 		sendMessage(paket);
-		adapter.log.info('I am send learnIR: ');
+		adapter.log.info('---- Send learnIR');
 	}
 		
 	adapter.subscribeStates('*');
