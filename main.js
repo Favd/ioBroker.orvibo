@@ -212,20 +212,7 @@ function main() {
 				native: {}
 			});
 		}
-		if(obj.model =='Allone'){
-			adapter.createState('devices', obj.mac, 'learnIRcom', {
-				role: 'command',
-				name: 'Allone: learnMode',
-				write: true,
-				type: 'boolean',
-				common: {
-					name: 'Allone: learnMode',
-					type: 'boolean',
-					role: 'command'
-				},
-				native: {}
-			});
-		}
+		
 		adapter.createState('devices', obj.mac, 'Online', {
 			role: 'state',
 			name: 'Online',
